@@ -93,19 +93,43 @@ AS
 -- Question 3i
 CREATE VIEW q3i(playerid, namefirst, namelast, yearid, slg)
 AS
-  SELECT 1, 1, 1, 1, 1 -- replace this line
+  SELECT p.playerid, namefirst, namelast, yearid, 
+	ROUND(((H - H2B - H3B - HR) + (2 * H2B + 3 * H3B + 4 * HR) * 1.0) / AB, 4) as slg
+  FROM batting as b, people as p
+  WHERE b.playerid = p.playerid AND AB > 50
+  order by slg desc, yearid asc, p.playerid asc
+  limit 10
 ;
 
 -- Question 3ii
 CREATE VIEW q3ii(playerid, namefirst, namelast, lslg)
 AS
-  SELECT 1, 1, 1, 1 -- replace this line
+  SELECT p.playerid, p.namefirst, p.namelast, 
+	ROUND(((SUM(H) - SUM(H2B) - SUM(H3B) - SUM(HR)) + 
+	(2 * SUM(H2B) + 3 * SUM(H3B) + 4 * 	SUM(HR)) * 1.0) / SUM(AB), 4) as lslg
+  FROM batting as b, people as p
+  WHERE b.playerid = p.playerid
+  group by b.playerid
+  having SUM(b.AB) > 50
+  order by lslg desc, p.playerid asc
+  limit 10
 ;
 
 -- Question 3iii
 CREATE VIEW q3iii(namefirst, namelast, lslg)
 AS
-  SELECT 1, 1, 1 -- replace this line
+  SELECT p.namefirst, p.namelast, 
+  ROUND(((SUM(H) - SUM(H2B) - SUM(H3B) - SUM(HR)) + (2 * SUM(H2B) + 3 * SUM(H3B) + 4 * SUM(HR)) * 1.0) / SUM(AB), 4) as lslg
+  FROM batting as b, people as p
+  WHERE b.playerid = p.playerid
+  GROUP BY b.playerid
+  having SUM(b.AB) > 50 AND lslg > (
+      SELECT ROUND(((SUM(H) - SUM(H2B) - SUM(H3B) - SUM(HR)) + (2 * SUM(H2B) + 3 * SUM(H3B) + 4 * SUM(HR)) * 1.0) / SUM(AB), 4) 
+      FROM batting as b
+      WHERE b.playerid = 'mayswi01'
+      GROUP BY b.playerid
+  )
+  ORDER BY p.namefirst, p.namelast
 ;
 
 -- Question 4i

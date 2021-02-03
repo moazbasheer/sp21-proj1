@@ -135,7 +135,10 @@ AS
 -- Question 4i
 CREATE VIEW q4i(yearid, min, max, avg)
 AS
-  SELECT 1, 1, 1, 1 -- replace this line
+  SELECT yearID, min(salary), max(salary), ROUND(AVG(salary), 4)
+  FROM salaries
+  group by yearID
+  order by yearid asc
 ;
 
 
@@ -147,22 +150,56 @@ INSERT INTO binids VALUES (0), (1), (2), (3), (4), (5), (6), (7), (8), (9);
 -- Question 4ii
 CREATE VIEW q4ii(binid, low, high, count)
 AS
-  SELECT 1, 1, 1, 1 -- replace this line
+  with a as (select min(salary) as mn from salaries where yearID = 2016),
+     b as (select max(salary) as mx from salaries where yearID = 2016),
+     c as (select count(*) as cnt from binids)
+	select * from (
+	SELECT binid, mn + (mx - mn) * binid / cnt, 
+	       mn + (mx - mn) * (binid + 1) / cnt, 
+	       (
+		   select count(salary) 
+		   from salaries
+		   where yearID = 2016 AND salary >= mn + (mx - mn) * binid / cnt 
+		   AND salary < mn + (mx - mn) * (binid + 1) / cnt
+	       )
+	FROM binids, a, b, c
+	WHERE binid < 9
+	union
+	SELECT 9, mn + (mx - mn) * 9 / cnt, mx, 
+	       (
+		   select count(salary) 
+		   from salaries
+		   where yearID = 2016 AND salary >= mn + (mx - mn) * 9 / cnt 
+		   AND salary <= mx
+	       )
+	FROM a, b, c)
 ;
 
 -- Question 4iii
 CREATE VIEW q4iii(yearid, mindiff, maxdiff, avgdiff)
 AS
-  SELECT 1, 1, 1, 1 -- replace this line
+  with a as (select yearid, min(salary) mn, max(salary) mx, avg(salary) ag 
+	     from salaries
+	     group by yearid)
+  SELECT a1.yearid, a1.mn - a2.mn, a1.mx - a2.mx, ROUND(a1.ag - a2.ag, 4)
+  FROM a as a1, a as a2
+  WHERE a1.yearid = a2.yearid + 1
 ;
 
 -- Question 4iv
 CREATE VIEW q4iv(playerid, namefirst, namelast, salary, yearid)
 AS
-  SELECT 1, 1, 1, 1, 1 -- replace this line
+  SELECT p.playerid, namefirst, namelast, salary, yearid
+  FROM people as p natural join salaries as s
+  WHERE p.playerid = s.playerid 
+	AND salary = (select max(salary) from salaries where yearid = s.yearid)
+	AND yearid IN (2000, 2001)
 ;
 -- Question 4v
 CREATE VIEW q4v(team, diffAvg) AS
-  SELECT 1, 1 -- replace this line
+  SELECT asf.teamID, max(s.salary) - min(s.salary)
+  FROM allstarfull as asf, salaries as s
+  WHERE asf.playerid = s.playerid AND asf.yearID = 2016 AND asf.yearID = s.yearID 
+  group by asf.teamID
 ;
 
